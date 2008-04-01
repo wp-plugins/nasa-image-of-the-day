@@ -1,7 +1,7 @@
 === NASA Image Of The Day ===
 Contributors: Olav Kolbu
 Donate link: http://www.kolbu.com/
-Tags: nasa, image, space, widget, plugin, nasa image of the day
+Tags: nasa, images, space, widget, plugin, nasa image of the day
 Requires at least: 2.3.3
 Tested up to: 2.5
 Stable tag: trunk
