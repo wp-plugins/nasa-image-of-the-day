@@ -2,7 +2,7 @@
 /*
 Plugin Name: NASA Image Of The Day
 Description: Adds a sidebar widget to display the NASA Image of the Day (NASA IOTD)
-Version:     1.0
+Version:     1.1
 Author:      Olav Kolbu
 Author URI:  http://www.kolbu.com/
 Plugin URI:  http://wordpress.org/extend/plugins/nasa-image-of-the-day/
@@ -48,7 +48,7 @@ function widget_niotdwidget_init() {
 		
 		// Create the regexs needed
 		$RegExLead = 'Image of the Day Gallery';
-		$RegExImage = '^<a href="([^"]+)"><IMG WIDTH="[^"]+" ALT="[^"]+" TITLE="[^"]+" SRC="([^"]+)".*$';
+		$RegExImage = '^<a href="([^"]+)"><IMG WIDTH="[^"]+" SRC="([^"]+)".*$';
 		$RegExTitle = '^<h3[^>]+>([^<]+)';
 		$RegExText = '^([^<]+)</p>';
 		
@@ -60,7 +60,7 @@ function widget_niotdwidget_init() {
 			if ($RemoteFile) {
 				// Loop until we're at the end of the file
 				while (!feof($RemoteFile)) {
-				   $buffer = fgets($RemoteFile, 1024);
+				   $buffer = fgets($RemoteFile, 4096);
 					// look for lead in
 					if (eregi ($RegExLead, $buffer, $out)) {
 					    $LeadFound = true;
@@ -69,7 +69,9 @@ function widget_niotdwidget_init() {
 					    continue;
 					}
 					if (!$NIOTDTitle && eregi ($RegExTitle, $buffer, $out))
+					{
 						$NIOTDTitle = $out[1];
+				 	}		
 					if (!$NIOTDUrl && eregi ($RegExImage, $buffer, $out)) {
 						$NIOTDUrl = $out[1];
 						$NIOTDImage = $out[2];

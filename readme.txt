@@ -44,3 +44,8 @@ e.g.
 
 1. Widget in action under the Yellowjacket-10 theme.
 
+== Changelog ==
+
+1. 1.0 Initial release
+1. 1.1 NASA changed their front page layout
+
