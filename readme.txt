@@ -7,7 +7,7 @@ Tested up to: 2.5
 Stable tag: trunk
 
 Adds a sidebar widget to display the current image from the NASA 
-Image Of The Day Gallery.
+Image Of The Day Gallery. Now using RSS.
 
 == Description ==
 
@@ -19,10 +19,13 @@ widget. Clicking on the thumbnail will take you to the NASA Gallery where
 you can view the full sized image and read the rest of the text. No
 local storage is used, the image and text is fetched on every view.
 
-The image and text is fetched by parsing the HTML code of the relevant 
-web page at NASA, so if they make more than cosmetic changes the widget
-will break. Hopefully gracefully, showing a sorry-text instead. Look for
-updates if that happens.
+A friendly user let me know that the Image Of The Day is also
+available as an RSS feed. That greatly simplified this plugin and 
+should make it impervious to cosmetic changes at NASA. In
+addition to this, the image width is now customizable. The height
+is calculated per image so that it stays proportional when scaled
+(down) to width. 
+
 
 **[Download now!](http://downloads.wordpress.org/plugin/nasa-image-of-the-day.zip)**
 
@@ -38,7 +41,7 @@ e.g.
 1. Unzip into the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
 1. It now shows up under available widgets, you can change the
-   title if you want.
+   title and image width if you want.
 
 == Screenshots ==
 
@@ -48,4 +51,6 @@ e.g.
 
 1. 1.0 Initial release
 1. 1.1 NASA changed their front page layout
+1. 2.0 Using RSS feed instead of screen scraping, added admin defined width.
+
 

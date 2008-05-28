@@ -2,7 +2,7 @@
 /*
 Plugin Name: NASA Image Of The Day
 Description: Adds a sidebar widget to display the NASA Image of the Day (NASA IOTD)
-Version:     1.1
+Version:     2.0
 Author:      Olav Kolbu
 Author URI:  http://www.kolbu.com/
 Plugin URI:  http://wordpress.org/extend/plugins/nasa-image-of-the-day/
@@ -27,6 +27,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+include_once(ABSPATH . WPINC . '/rss.php');
+
 function widget_niotdwidget_init() {
 
 	// Check for the required plugin functions. This will prevent fatal
@@ -36,91 +38,40 @@ function widget_niotdwidget_init() {
 		
 	function widget_niotdwidget_returnimageandlink()
 	{
-		$niotdAvailable = true;
-		
 		$options = get_option('widget_niotdwidget');
 
-		// Set the image width to 150 pixels
-		$ImageWidthConst = 195;
+                // Set the image width to user default pixels, default 195 if 0
+                $ImageWidth = $options['width'] ? $options['width'] : 195;
+
 		// Set the base URL for the NIOTD site, thanks NASA!
 		$URL = 'http://www.nasa.gov';
-		$FullURL = $URL.'/home/index.html';
-		
-		// Create the regexs needed
-		$RegExLead = 'Image of the Day Gallery';
-		$RegExImage = '^<a href="([^"]+)"><IMG WIDTH="[^"]+" SRC="([^"]+)".*$';
-		$RegExTitle = '^<h3[^>]+>([^<]+)';
-		$RegExText = '^([^<]+)</p>';
-		
-		// Regular expression to validate that we have a good image to present
-		$RegExImageExtension= '.*(\.[Jj][Pp][Gg]|\.[Gg][Ii][Ff]|\.[Jj][Pp][Ee][Gg]|\.[Pp][Nn][Gg])';
+		$FullURL = $URL.'/rss/image_of_the_day.rss';
 
-		// Open the remote file using the full URL, read-only
-		if($RemoteFile = fopen($FullURL, "r")) {
-			if ($RemoteFile) {
-				// Loop until we're at the end of the file
-				while (!feof($RemoteFile)) {
-				   $buffer = fgets($RemoteFile, 4096);
-					// look for lead in
-					if (eregi ($RegExLead, $buffer, $out)) {
-					    $LeadFound = true;
-					}
-					if ( ! $LeadFound ) {
-					    continue;
-					}
-					if (!$NIOTDTitle && eregi ($RegExTitle, $buffer, $out))
-					{
-						$NIOTDTitle = $out[1];
-				 	}		
-					if (!$NIOTDUrl && eregi ($RegExImage, $buffer, $out)) {
-						$NIOTDUrl = $out[1];
-						$NIOTDImage = $out[2];
-					}
-					// Check for the text
-					if (!$NIOTDText && eregi ($RegExText, $buffer, $out)) {
-						$NIOTDText = $out[1];
-						break;
-					}
-			   }
-			   // All done, we're closed, get out!
-			   fclose($RemoteFile);
-			}
-		}
-		// We didn't find the NIOTD page, set available bool to false
-		else {
-			$niotdAvailable = false;
-		}
-		// If the NIOTD is available, perform our mojo
-		if ($niotdAvailable)
-		{
-			// Image url
-			$ImageUrl = $URL.$NIOTDImage;
-			
-			// Check to make sure the image is a compatible format
-			if(eregi($RegExImageExtension, $ImageUrl)) {
-						
-				// Get the dimensions of the image for resizing
-				$ImageDimensionsSmall = @getimagesize($ImageUrl);
-				// We want a proportional image, so create our resize percentage based on the width
-				$ImageResizePercentage = ($ImageDimensionsSmall[0] / $ImageWidthConst);
-				// Set the image width to our constant
-				$ImageWidthSmall = ($ImageWidthConst);
-				// Set the image height using the resize percentage, again porpotions are the key
-				$ImageHeightSmall = @($ImageDimensionsSmall[1] / $ImageResizePercentage);
+		define('MAGPIE_CACHE_AGE', 60);
+		define('MAGPIE_CACHE_ON', 1);
+		define('MAGPIE_DEBUG', 0);
 
-				// Create the hyperlink to the NIOTD site, wrapped around the image itself, setting the target to a new window and passing in the image height and width
-				$ImageAndLink = '<b>'.$NIOTDTitle.'</b><br><a href="'.$URL.$NIOTDUrl.'" target="_blank"><img src="'.$ImageUrl.'" title="'.$NIOTDTitle.'" width="'.$ImageWidthSmall.'" height="'.$ImageHeightSmall.'"/></a><br>&nbsp;<br><font size="-1">'.$NIOTDText.' <a target="_blank" href="'.$URL.$NIOTDUrl.'"><br />Read More</a></font>';
+		$rss = fetch_rss($FullURL);
+		if ( is_object($rss) ) {
+                    // Get the dimensions of the image for resizing
+		    $ImageDimensions = @getimagesize($rss->image['url']);
 
-				// El fin!  Return the results
-				return $ImageAndLink;
-			}
-			else {
-				$niotdAvailable = false;
-			}
-		}
-		// The NIOTD wasn't available, return a message indicating as such
-		if (!$niotdAvailable) {
-			return '<p>NIOTD not available</p>';
+                    // We want a proportional image, so create our resize percentage based on the width
+                    $ImageResizePercentage = ($ImageDimensions[0] / $ImageWidth);
+
+                    // Set the image height using the resize percentage, again porpotions are the key
+                    $ImageHeight = @($ImageDimensions[1] / $ImageResizePercentage);
+
+
+		    print '<b>'.$rss->items[0]['title'].'</b><br><a href="'.
+                          $rss->items[0]['link'].'" target="_blank"><img src="'.
+                          $rss->image['url'].'" title="'.$rss->items[0]['title'].
+                          '" width="'.$ImageWidth.'" height="'.$ImageHeight.
+                          '"/></a><br>&nbsp;<br><font size="-1">'.
+                          $rss->items[0]['description'].' <a target="_blank" href="'.
+                          $rss->items[0]['link'].'"><br />Read More</a></font>';
+		} else {
+		    return '<p>NIOTD not available</p>';
 		}
 	}
 		
@@ -144,20 +95,23 @@ function widget_niotdwidget_init() {
 
 		// Get our options and see if we're handling a form submission.
 		$options = get_option('widget_niotdwidget');
-		if ( !is_array($options) )
 		if ( $_POST['niotdwidget-submit'] ) {
 
 			// Remember to sanitize and format use input appropriately.
 			$options['title'] = strip_tags(stripslashes($_POST['niotdwidget-title']));
+			$options['width'] = strip_tags(stripslashes($_POST['niotdwidget-width']));
 			update_option('widget_niotdwidget', $options);
 		}
 
 		// Be sure you format your options to be valid HTML attributes.
 		$title = htmlspecialchars($options['title'], ENT_QUOTES);
+		$width = htmlspecialchars($options['width'], ENT_QUOTES);
 		
 		// Here is our little form segment. Notice that we don't need a
 		// complete form. This will be embedded into the existing form.
 		echo '<p style="text-align:right;"><label for="niotdwidget-title">Title: <input style="width: 200px;" id="niotdwidget-title" name="niotdwidget-title" type="text" value="'.$title.'" /></label></p>';
+		echo '<p style="text-align:right;"><label for="niotdwidget-width">Width: <input style="width: 50px;" id="niotdwidget-width" name="niotdwidget-width" type="text" value="'.$width.'" /></label></p>';
+		echo '<p style="text-align:right;">Images will be propotionally scaled to width.</p>';
 		echo '<p style="text-align:right;"><em>Changes wont be reflected until after saving</em></p>';
 		echo '<input type="hidden" id="niotdwidget-submit" name="niotdwidget-submit" value="1" />';
 	}
