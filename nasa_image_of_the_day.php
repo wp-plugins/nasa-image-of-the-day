@@ -2,7 +2,7 @@
 /*
 Plugin Name: NASA Image Of The Day
 Description: Adds a sidebar widget to display the NASA Image of the Day (NASA IOTD)
-Version:     2.0
+Version:     3.0
 Author:      Olav Kolbu
 Author URI:  http://www.kolbu.com/
 Plugin URI:  http://wordpress.org/extend/plugins/nasa-image-of-the-day/
@@ -27,7 +27,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-include_once(ABSPATH . WPINC . '/rss.php');
+
+require_once(ABSPATH . WPINC . '/class-feed.php');
+
+// ************* SimplePie helper fns *****************
+// Copy from WPINC . '/feed.php' and modded
+function widget_niotdwidget_fetch_feed($url) {
+
+    $feed = new SimplePie();
+    $feed->set_feed_url($url);
+    $feed->set_cache_class('WP_Feed_Cache');
+    $feed->set_file_class('WP_SimplePie_File');
+    $feed->set_cache_duration($cachetime);
+    // Look at fn calls in SimplePie::set_stupidly_fast()
+    $feed->init();
+    $feed->handle_content_type();
+
+    if ( $feed->error() )
+        return new WP_Error('simplepie-error', $feed->error());
+
+    return $feed;
+}
 
 function widget_niotdwidget_init() {
 
@@ -47,14 +67,12 @@ function widget_niotdwidget_init() {
 		$URL = 'http://www.nasa.gov';
 		$FullURL = $URL.'/rss/image_of_the_day.rss';
 
-		define('MAGPIE_CACHE_AGE', 60);
-		define('MAGPIE_CACHE_ON', 1);
-		define('MAGPIE_DEBUG', 0);
-
-		$rss = fetch_rss($FullURL);
+		$rss = widget_niotdwidget_fetch_feed($FullURL);
 		if ( is_object($rss) ) {
+                    $item = $rss->get_item(0);
+                    $enc = $item->get_enclosure();
                     // Get the dimensions of the image for resizing
-		    $ImageDimensions = @getimagesize($rss->image['url']);
+		    $ImageDimensions = @getimagesize($enc->get_link());
 
                     // We want a proportional image, so create our resize percentage based on the width
                     $ImageResizePercentage = ($ImageDimensions[0] / $ImageWidth);
@@ -63,13 +81,13 @@ function widget_niotdwidget_init() {
                     $ImageHeight = @($ImageDimensions[1] / $ImageResizePercentage);
 
 
-		    print '<b>'.$rss->items[0]['title'].'</b><br><a href="'.
-                          $rss->items[0]['link'].'" target="_blank"><img src="'.
-                          $rss->image['url'].'" title="'.$rss->items[0]['title'].
+		    print '<b>'.$item->get_title().'</b><br><a href="'.
+                          $item->get_link().'" target="_blank"><img src="'.
+                          $enc->get_link().'" title="'.$item->get_title().
                           '" width="'.$ImageWidth.'" height="'.$ImageHeight.
                           '"/></a><br>&nbsp;<br><font size="-1">'.
-                          $rss->items[0]['description'].' <a target="_blank" href="'.
-                          $rss->items[0]['link'].'"><br />Read More</a></font>';
+                          $item->get_description().' <a target="_blank" href="'.
+                          $item->get_link().'"><br />Read More</a></font>';
 		} else {
 		    return '<p>NIOTD not available</p>';
 		}

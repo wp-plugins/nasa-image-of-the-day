@@ -3,7 +3,7 @@ Contributors: Olav Kolbu
 Donate link: http://www.kolbu.com/donations/
 Tags: nasa, images, space, widget, plugin, nasa image of the day
 Requires at least: 2.3.3
-Tested up to: 2.5
+Tested up to: 3.2
 Stable tag: trunk
 
 Adds a sidebar widget to display the current image from the NASA 
@@ -52,5 +52,5 @@ e.g.
 1. 1.0 Initial release
 1. 1.1 NASA changed their front page layout
 1. 2.0 Using RSS feed instead of screen scraping, added admin defined width.
-
+1. 3.0 NASA updated their RSS feed, broke the old WP RSS system.
 
